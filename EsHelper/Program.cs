@@ -17,12 +17,12 @@ namespace EsHelper
                 new Uri("http://172.10.252.123:9200"),
                 new Uri("http://172.10.252.124:9200")
             });
-            IDictionary<string, string> dicWheres = new Dictionary<string, string>();
-            dicWheres.Add("message.requestBody", "1905142018008770");
-            //dicWheres.Add("message.correlationId", "4dffa2aaf9ce");
+
+            //IDictionary<string, string> dicWheres = new Dictionary<string, string>();
+            //dicWheres.Add("message.requestBody", "22112507");
             IDictionary<string, SortOrder> dicSorts = new Dictionary<string, SortOrder>();
             dicSorts.Add("message.elapsedMilliseconds", SortOrder.Descending);
-            var searchRequest = QueryRequest("zfb-thirdparty_log_apihttp*", "doc", dicWheres , 0, 200, dicSorts);
+            var searchRequest = QueryRequest("zfb-thirdparty_log_apihttp*", "doc", "message.requestBody", new string[] { "22112507" }, 0, 200, dicSorts);
             var httpLog = ExecuteSearch(client, searchRequest);
         }
 
@@ -55,19 +55,21 @@ namespace EsHelper
         }
 
         #region 词条查询
-        public static SearchRequest QueryRequest(string indexName, string type,IDictionary<string,string> dicWheres = null, int startIndex = -1, int endIndex = -1, IDictionary<string, SortOrder> dicSorts = null)
+        public static SearchRequest QueryRequest(string indexName, string type,string key,string[] value, int startIndex = -1, int endIndex = -1, IDictionary<string, SortOrder> dicSorts = null)
         {
             SearchRequest sr = new SearchRequest(indexName, type);
-            if (dicWheres != null)
+            TermQuery tq = new TermQuery();
+            tq.Field = key;
+            if (value.Length <= 1)
             {
-                foreach (var dicWhere in dicWheres)
-                {
-                    TermQuery tq = new TermQuery();
-                    tq.Field = dicWhere.Key;
-                    tq.Value = dicWhere.Value;
-                    sr.Query = tq;
-                }
+                tq.Value = value[0];
             }
+            else
+            {
+                tq.Value = value;
+            }
+            sr.Query = tq;
+            
             //查询数量 从startIndex条查询到endIndex条,索引从0开始
             if (startIndex > 0)
             {
